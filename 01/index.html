@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function solve(arr) {
+            var sum = 0;
+
+            for (var i = 0; i < arr.length; i++) {
+                var line = arr[i];
+
+                var first = 0;
+                var last = 0;
+
+                var found = false;
+                for (var j = 0; j < line.length && !found; j++) {
+                    first = parseInt(line.charAt(j), 10);
+                    found = !isNaN(first);
+                }
+
+                found = false;
+
+                for (var j = line.length - 1; j >= 0 && !found; j--) {
+                    last = parseInt(line.charAt(j), 10);
+                    found = !isNaN(last);
+                }
+
+                var number = first * 10 + last;
+                sum += number;
+            }
+
+            return sum;
+        }
+
+        function findStartNumber(s) {
+            var text2num = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+            var char2num = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+            for (var i = 0; i < text2num.length; i++) {
+                if (s.startsWith(text2num[i])) { return i + 1; }
+                if (s.startsWith(char2num[i])) { return i + 1; }
+            }
+
+            return Number.isNaN;
+        }
+
+        function findEndNumber(s) {
+            var text2num = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+            var char2num = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+            for (var i = 0; i < text2num.length; i++) {
+                if (s.endsWith(text2num[i])) { return i + 1; }
+                if (s.endsWith(char2num[i])) { return i + 1; }
+            }
+
+            return Number.isNaN;
+        }
+
+        function solve2(arr) {
+            var sum = 0;
+
+            for (var i = 0; i < arr.length; i++) {
+                var line = arr[i];
+
+                var first = Number.NaN;
+
+                for (var j = 0; j < line.length && isNaN(first); j++) {
+                    first = findStartNumber(line.substring(j));
+                }
+
+                var last = Number.NaN;
+                for (var j = line.length - 1; j >= 0 && isNaN(last); j--) {
+                    last = findEndNumber(line.substring(0, j + 1));
+                }
+
+                sum += first * 10 + last;
+            }
+
+            return sum;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+
+
+    </script>
+</html>
