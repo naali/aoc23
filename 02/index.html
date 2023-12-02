@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+        
+        class Group {
+            index = 0;
+            hands = [];
+
+            maxForColor = function (color) {
+                var max = 0;
+
+                for (var i = 0; i < this.hands.length; i++) {
+                    var hand = this.hands[i];
+
+                    for (var j = 0; j < hand.length; j++) {
+                        if (hand[j].color == color) {
+                            if (hand[j].amount > max) { max = hand[j].amount; }
+                        }
+                    }
+                }
+
+                return max;
+            }
+
+            constructor(str) {
+                var indexOnly = str.split(':')[0].split(' ')[1];
+                this.index = parseInt(indexOnly);
+                console.log(this.index);
+
+
+                var hands = str.split(':')[1].split(';');
+                for (var i = 0; i < hands.length; i++) {
+                    var hand = hands[i].split(',');
+
+                    var interArr = [];
+
+                    for (var j = 0; j < hand.length; j++) {
+                        var h = hand[j].trim().split(' ');
+                        var amount = parseInt(h[0]);
+                        var color = h[1];                        
+                        var handobj = { amount: amount, color: color }
+
+                        interArr.push(handobj);
+                    }
+
+                    this.hands.push(interArr);
+                }
+            }
+        }
+
+        function solve(arr) {
+            var indexSum = 0;
+
+            var rules = [];
+            rules.push({ color: 'red', amount: 12 });
+            rules.push({ color: 'green', amount: 13 });
+            rules.push({ color: 'blue', amount: 14 });
+
+            for (var i = 0; i < arr.length; i++) {
+                var g = new Group(arr[i]);
+
+                var isOk = true;
+
+                for (var r = 0; r < rules.length && isOk; r++) {
+                    var rule = rules[r];
+                    var foo = g.maxForColor(rule.color);
+                    isOk &= foo <= rule.amount;
+                }
+
+                if (isOk) {
+                    indexSum += g.index;
+                }
+            }
+
+            return indexSum;
+        }
+
+        function solve2(arr) {
+            var indexPowerSum = 0;
+
+            var rules = [];
+            rules.push({ color: 'red' });
+            rules.push({ color: 'green' });
+            rules.push({ color: 'blue' });
+
+            for (var i = 0; i < arr.length; i++) {
+                var g = new Group(arr[i]);
+
+                var power = 1;
+                for (var r = 0; r < rules.length; r++) {
+                    power *= g.maxForColor(rules[r].color);;
+                }
+
+                indexPowerSum += power;
+            }
+
+            return indexPowerSum;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+
+    </script>
+</html>
