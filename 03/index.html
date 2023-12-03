@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        class NumObj {
+            touches = false;
+            found = false;
+            x = -1;
+            y = -1;
+            length = 0;
+            value = 0;
+        }
+
+        class SpecialObj {
+            x = -1;
+            y = -1;
+            char = 'X';
+
+            touches = function(no) {
+                if ((this.y < no.y - 1) || (this.y > no.y + 1)) {
+                    return false;
+                }
+
+                if ((this.x < no.x - 1) || (this.x > no.x + no.length)) {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        function findNumbersAndSpecials(arr) {
+            var foundNumbers = [];
+            var foundSpecials = [];
+
+            for (var i = 0; i < arr.length; i++) {
+                var line = arr[i];
+
+                var no = new NumObj();
+                for (var j = 0; j < line.length; j++) {
+                    var c = line.charAt(j);
+
+                    if (c >= '0' && c <= '9') {
+                        if (!no.found) {
+                            no.found = true;
+                            no.x = j;
+                            no.y = i;
+                        }
+
+                        no.value = no.value * 10 + parseInt(c);
+                        no.length++;
+
+                        if (j + 1 >= line.length) {
+                            foundNumbers.push(no);
+                            no = new NumObj();
+                        }
+
+                        continue;
+                    }
+
+                    if (no.found) {
+                        foundNumbers.push(no);
+                        no = new NumObj();
+                    }
+
+                    if (c == '.') {
+                        continue;
+                    }
+
+                    var s = new SpecialObj();
+                    s.x = j;
+                    s.y = i;
+                    s.char = c;
+
+                    foundSpecials.push(s);
+                }
+            }
+
+            return {numbers: foundNumbers, specials: foundSpecials};
+        }
+
+        function solve(arr) {
+            var numsAndSpecials = findNumbersAndSpecials(arr);
+            var foundNumbers = numsAndSpecials.numbers;
+            var foundSpecials = numsAndSpecials.specials;
+
+            var sum = 0;
+
+            for (var i = 0; i < foundNumbers.length; i++) {
+                var no = foundNumbers[i];
+
+                for (var j = 0; j < foundSpecials.length && !no.touches; j++) {
+                    no.touches |= foundSpecials[j].touches(no);
+                }
+
+                if (no.touches) {
+                    sum += no.value;
+                } else {
+                    console.log(no.value);
+                }
+            }
+
+            return sum;
+        }
+
+        function solve2(arr) {
+            var numsAndSpecials = findNumbersAndSpecials(arr);
+            var foundNumbers = numsAndSpecials.numbers;
+            var foundSpecials = numsAndSpecials.specials;
+
+            var gearRatios = 0;
+
+            for (var i = 0; i < foundSpecials.length; i++) {
+
+                var touchCount = 0;
+                var ratio = 1;
+
+                for (var j = 0; j < foundNumbers.length && touchCount < 3; j++) {
+                    var no = foundNumbers[j];
+                    if (foundSpecials[i].touches(no)) {
+                        ratio *= no.value;
+                        touchCount++;
+                    }
+                }
+
+                if (touchCount == 2) {
+                    gearRatios += ratio;
+                }
+            }
+
+            return gearRatios;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+
+    </script>
+</html>
