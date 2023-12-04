@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function numbersInString(s) {
+            var n = [];
+
+            var splitted = s.trim().split(' ');
+            for (var i = 0; i < splitted.length; i++) {
+                n.push(parseInt(splitted[i]));
+            }
+
+            return n;
+        }
+
+        function stringToTicket(s) {
+            var o = {
+                copies: 1
+            };
+
+            o['winning'] = numbersInString(s.split(':')[1].trim().replace(/\s+/g,' ').split('|')[0]);
+            o['numbers'] = numbersInString(s.split(':')[1].trim().replace(/\s+/g,' ').split('|')[1]);
+
+            return o;
+        }
+
+        function matchesInTicket(t) {
+            var count = 0;
+
+            for (var i = 0; i < t.winning.length; i++) {
+                if (t.numbers.includes(t.winning[i])) {
+                    count++;
+                }
+            }
+
+            return count
+        }
+
+        function solve(arr) {
+
+            var ticketValues = 0;
+            
+            for (var i = 0; i < arr.length; i++) {
+                var ticket = stringToTicket(arr[i]);
+                var matches = matchesInTicket(ticket);
+
+                if (matches > 0) {
+                    var ticketValue = Math.pow(2, matches - 1);
+                    console.log(ticketValue);
+                    ticketValues += ticketValue;
+                }
+            }
+
+            return ticketValues;
+        }
+
+        function solve2(arr) {
+            var tickets = [];
+
+            for (var i = 0; i < arr.length; i++) {
+                tickets.push(stringToTicket(arr[i]));
+            }
+
+            for (var i = 0; i < tickets.length; i++) {
+                for (var k = 0; k < tickets[i].copies; k++) {
+                    var matches = matchesInTicket(tickets[i]);
+
+                    for (var j = 0; j < matches; j++) {
+                        tickets[i + j + 1].copies++;
+                    }
+                }
+            }
+
+            var totalTickets = 0;
+
+            for (var i = 0; i < tickets.length; i++) {
+                totalTickets += tickets[i].copies;
+            }
+
+            return totalTickets;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+
+    </script>
+</html>
