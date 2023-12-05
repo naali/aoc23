@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                arr.push(splitted[i]);
+            }
+
+            return arr;
+        }
+
+        function getMap(arr) {
+            var maps = {};
+
+            for (var i = 0; i < arr.length; i++) {
+                if (!arr[i].endsWith(':')) { continue; }
+
+                var from = arr[i].split(' ')[0].split('-to-')[0];
+                var to = arr[i].split(' ')[0].split('-to-')[1];
+
+                var mapping = {
+                    from: from,
+                    to: to,
+                    maps: [],
+                    getMapping: function(from) {
+                        for (var i = 0; i < this.maps.length; i++) {
+                            var m = this.maps[i];
+
+                            if (from >= m.s && from < m.s + m.c) {
+                                return m.d + (from - m.s);
+                            }
+                        }
+
+                        return from;
+                    }
+                }
+
+                i++;
+
+                do {
+                    var nums = arr[i].split(' ');
+
+                    var destStart = parseInt(nums[0]);
+                    var sourceStart = parseInt(nums[1]);
+                    var count = parseInt(nums[2]);
+
+                    mapping.maps.push({
+                        s: sourceStart,
+                        d: destStart,
+                        c: count
+                    });
+
+                    i++;
+                } while (i + 1 < arr.length && arr[i].length > 0);
+
+                i--;
+
+                maps[from] = mapping;
+            }
+
+            return maps;
+        }
+
+        function getSeeds(arr) {
+            var seedStr = arr[0].split(': ')[1].split(' ');
+            var seedArr = [];
+
+            for (var i = 0; i < seedStr.length; i++) {
+                seedArr.push(parseInt(seedStr[i]));
+            }
+
+            return seedArr;
+        }
+
+        function findSeedLocation(seed, map) {
+            var dest = 'seed';
+
+            var mappingNumber = seed;
+
+            do {
+                var newDest = map[dest].to;
+                mappingNumber = map[dest].getMapping(mappingNumber);
+
+                dest = newDest;
+            } while (dest != 'location');
+
+            return mappingNumber;
+        }
+
+        function solve(arr) {
+            var seeds = getSeeds(arr);
+            var map = getMap(arr);
+
+            var lowest = 1000000000;
+
+            for (var i = 0; i < seeds.length; i++) {
+                var loc = findSeedLocation(seeds[i], map);
+                if (loc < lowest) { lowest = loc; }
+            }
+
+            return lowest;
+        }
+
+        function solve2(arr) {
+            var seeds = getSeeds(arr);
+            var map = getMap(arr);
+
+            var lowest = 99999999999999;
+
+            for (var i = 0; i < seeds.length; i+=2) {
+                var s = parseInt(seeds[i]);
+                var c = parseInt(seeds[i + 1]) - 1;
+
+                console.log("Searching range " + s + " to " + (s + c));
+
+                for (var j = s; j < s + c; j++) {
+                    var loc = findSeedLocation(j, map);
+                    if (loc < lowest) { 
+                        lowest = loc;
+                        console.log("Lowest: " + lowest);
+                    }
+                }
+            }
+
+            return lowest;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
