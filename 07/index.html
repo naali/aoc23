@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        class Card {
+            name = '?';
+            value = 0;
+            jokerValue = 0;
+
+            constructor(c) {
+                this.name = c;
+
+                switch (c) {
+                    case 'A': { this.value = 14; break; }
+                    case 'K': { this.value = 13; break; }
+                    case 'Q': { this.value = 12; break; }
+                    case 'J': { this.value = 11; break; }
+                    case 'T': { this.value = 10; break; }
+                    default: { this.value = parseInt(c); }
+                }
+
+                this.jokerValue = this.value;
+                if (c == 'J') { this.jokerValue = 1; }
+            }
+        }
+
+        class Hand {
+            rawCards = "";
+            cards = [];
+            bid = 0;
+            cardCounts = {};
+            cardCountsWithJokers = {};
+            handValue = -1;
+            jokerHandValue = -1;
+            handName = "";
+            jokerHandName = "";
+            jokerCount = 0;
+
+            countCards = function() {
+                var counts = {};
+
+                for (var i = 0; i < this.cards.length; i++) {
+                    var cv = this.cards[i].value;
+                    counts[cv] = (counts[cv] || 0) + 1;
+                }
+
+                this.cardCounts = counts;
+
+                var countsWithoutJokers = {};
+                for (var i = 0; i < this.cards.length; i++) {
+                    var c = this.cards[i];
+
+                    if (c.name == 'J') { 
+                        this.jokerCount++; 
+                        continue; 
+                    };
+
+                    countsWithoutJokers[c.jokerValue] = (countsWithoutJokers[c.jokerValue] || 0) + 1;
+                }
+
+                this.cardCountsWithJokers = countsWithoutJokers;
+
+                if (this.jokerCount == 0) { 
+                    return; 
+                } else if (this.jokerCount == 5) {
+                    this.cardCountsWithJokers[this.cards[0].jokerValue] = 5;
+                    return;
+                }
+
+                var keys = Object.keys(countsWithoutJokers);
+                var max = 0;
+                var key = '';
+                
+                for (var i = 0; i < keys.length; i++) {
+                    if (this.cardCountsWithJokers[keys[i]] > max) {
+                        max = this.cardCountsWithJokers[keys[i]];
+                        key = keys[i];
+                    }
+                }
+
+                if (key != '') {
+                    this.cardCountsWithJokers[key] += this.jokerCount;
+                }
+            }
+
+            isFiveOfAKindWithJokers = function() {
+                return Object.values(this.cardCountsWithJokers).includes(5);
+            }
+
+            isFourOfAKindWithJokers = function() {
+                return Object.values(this.cardCountsWithJokers).includes(4);
+            }
+
+            isFullHouseWithJokers = function() {
+                return this.isThreeOfAKindWithJokers() && this.isAPairWithJokers();
+            }
+
+            isThreeOfAKindWithJokers = function() {
+                return Object.values(this.cardCountsWithJokers).includes(3);
+            }
+
+            isTwoPairsWithJokers = function() {
+                var vals = Object.values(this.cardCountsWithJokers);
+                return this.isAPair() && vals.length == 3;
+            }
+
+            isAPairWithJokers = function() {
+                return Object.values(this.cardCountsWithJokers).includes(2);
+            }
+
+            calculateJokerHandValue = function() {
+                var v = -1;
+                if (this.isFiveOfAKindWithJokers()) { v = 6; this.jokerHandName = "FiveOfAKind"; }
+                else if (this.isFourOfAKindWithJokers()) { v = 5; this.jokerHandName = "FourOfAKind"; }
+                else if (this.isFullHouseWithJokers()) { v = 4; this.jokerHandName = "FullHouse"; }
+                else if (this.isThreeOfAKindWithJokers()) { v = 3; this.jokerHandName = "ThreeOfAKind"; }
+                else if (this.isTwoPairsWithJokers()) { v = 2; this.jokerHandName = "TwoPairs"; }
+                else if (this.isAPairWithJokers()) { v = 1; this.jokerHandName = "APair"; }
+                else { v = 0; this.jokerHandName = "Nothing"; }
+
+                this.jokerHandValue = v;
+            }
+
+            isFiveOfAKind = function() {
+                return Object.values(this.cardCounts).includes(5);
+            }
+
+            isFourOfAKind = function() {
+                return Object.values(this.cardCounts).includes(4);
+            }
+
+            isFullHouse = function() {
+                return this.isThreeOfAKind() && this.isAPair();
+            }
+
+            isThreeOfAKind = function() {
+                return Object.values(this.cardCounts).includes(3);
+            }
+
+            isTwoPairs = function() {
+                var vals = Object.values(this.cardCounts);
+                return this.isAPair() && vals.length == 3;
+            }
+
+            isAPair = function() {
+                return Object.values(this.cardCounts).includes(2);
+            }
+
+            calculateHandValue = function() {
+                var v = -1;
+                if (this.isFiveOfAKind()) { v = 6; this.handName = "FiveOfAKind"; }
+                else if (this.isFourOfAKind()) { v = 5; this.handName = "FourOfAKind"; }
+                else if (this.isFullHouse()) { v = 4; this.handName = "FullHouse"; }
+                else if (this.isThreeOfAKind()) { v = 3; this.handName = "ThreeOfAKind"; }
+                else if (this.isTwoPairs()) { v = 2; this.handName = "TwoPairs"; }
+                else if (this.isAPair()) { v = 1; this.handName = "APair"; }
+                else { v = 0; this.handName = "Nothing"; }
+
+                this.handValue = v;
+            }
+
+            compare = function(a) {
+                if (this.handValue == a.handValue) {
+                    for (var i = 0; i < this.cards.length; i++) {
+                        if (this.cards[i].value == a.cards[i].value) { continue; }
+                        else {
+                            return this.cards[i].value - a.cards[i].value;
+                        }
+                    }
+                } else {
+                    return this.handValue - a.handValue;
+                }
+                return 0;
+            }
+
+            compareWithJokers = function(a) {
+                if (this.jokerHandValue == a.jokerHandValue) {
+                    for (var i = 0; i < this.cards.length; i++) {
+                        if (this.cards[i].jokerValue == a.cards[i].jokerValue) { continue; }
+                        else {
+                            return this.cards[i].jokerValue - a.cards[i].jokerValue;
+                        }
+                    }
+                } else {
+                    return this.jokerHandValue - a.jokerHandValue;
+                }
+
+                return 0;
+            }
+
+            constructor(h) {
+                this.bid = parseInt(h.trim().split(' ')[1]);
+
+                var cards = h.trim().split(' ')[0];
+                this.rawCards = cards;
+
+                for (var i = 0; i < cards.length; i++) {
+                    this.cards.push(new Card(cards[i]));
+                }
+
+                this.countCards();
+                this.calculateHandValue();
+                this.calculateJokerHandValue();
+            }
+        }
+
+        function solve(arr) {
+            var hands = [];
+            for (var i = 0; i < arr.length; i++) {
+                var h = new Hand(arr[i]);
+                hands.push(h);
+            }
+
+            hands.sort(function(a, b) {
+                return a.compare(b);
+            });
+
+            var total = 0;
+
+            for (var i = 0; i < hands.length; i++) {
+                total += (i + 1) * hands[i].bid;
+            }
+
+            return total;
+        }
+
+        function solve2(arr) {
+            var hands = [];
+            for (var i = 0; i < arr.length; i++) {
+                var h = new Hand(arr[i]);
+                hands.push(h);
+            }
+
+            hands.sort(function(a, b) {
+                return a.compareWithJokers(b);
+            });
+
+            var total = 0;
+
+            for (var i = 0; i < hands.length; i++) {
+                total += (i + 1) * hands[i].bid;
+            }
+
+            return total;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
