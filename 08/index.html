@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function createTree(arr) {
+            var tree = {};
+
+            for (var i = 1; i < arr.length; i++) {
+                var nodeName = arr[i].split(" = ")[0].trim();
+                var children = arr[i].split(" = ")[1].trim();
+
+                var left = children.split(", ")[0].trim().substring(1);
+                var right = children.split(", ")[1].trim().substring(0, 3);
+
+                tree[nodeName] = { L: left, R: right };
+            }
+
+            return tree;
+        }
+
+        function solve(arr) {
+            var dirs = arr[0].split('');
+            var tree = createTree(arr);
+
+            var found = false;
+            var i = 0;
+            var node = 'AAA';
+
+            do {
+                node = tree[node][dirs[i++ % dirs.length]];
+                found = node == 'ZZZ';
+            } while (!found);
+
+            return i;
+        }
+
+        function gcd(a, b) {
+            var rem = a % b;
+            return rem == 0 ? b : gcd(b, rem);
+        }
+
+        function lcm(a, b) {
+            return a * b / gcd(a, b);
+        }
+        
+        function solve2(arr) {
+            var dirs = arr[0].split('');
+            var tree = createTree(arr);
+            var treeKeys = Object.keys(tree);
+
+            var pointers = [];
+            for (var i = 0; i < treeKeys.length; i++) {
+                if (treeKeys[i].endsWith('A')) { pointers.push(treeKeys[i]); }
+            }
+
+            var loopLengths = Array(pointers.length).fill(0);
+
+            for (var i = 0; i < pointers.length; i++) {
+                dirIndex = 0;
+
+                do {
+                    pointers[i] = tree[pointers[i]][dirs[dirIndex++ % dirs.length]];
+                } while (!pointers[i].endsWith('Z'));
+
+                loopLengths[i] = dirIndex;
+            }
+
+            return loopLengths.reduce(lcm);
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
