@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function extrapolateToEnd(a) {
+            var allZeroes = true;
+
+            var outArr = [];
+            for (var i = 1; i < a.length; i++) {
+                var val = a[i] - a[i - 1];
+                allZeroes &= (val == 0);
+                outArr.push(val);
+            }
+
+            if (allZeroes) {
+                outArr.push(0);
+                return outArr;
+            }
+
+            var epArr = extrapolateToEnd(outArr);
+            outArr.push(outArr[outArr.length - 1] + epArr[epArr.length - 1]);
+
+            return outArr;
+        }
+
+        function extrapolateToBeginning(a) {
+            var allZeroes = true;
+
+            var outArr = [];
+            for (var i = 1; i < a.length; i++) {
+                var val = a[i] - a[i - 1];
+                allZeroes &= (val == 0);
+                outArr.push(val);
+            }
+
+            if (allZeroes) {
+                outArr.push(0);
+                return outArr;
+            }
+
+            var epArr = extrapolateToBeginning(outArr); 
+            outArr.splice(0, 0, outArr[0] - epArr[0]);
+
+            return outArr;
+        }
+
+
+        function stringToNumbers(s) {
+            var nums = s.trim().split(' ');
+            var numArr = [];
+            for (var i = 0; i < nums.length; i++) {
+                numArr.push(parseInt(nums[i]));
+            }
+
+            return numArr;
+        }
+
+        function solve(arr) {
+            var sum = 0;
+
+            for (var i = 0; i < arr.length; i++) {
+                var numArr = stringToNumbers(arr[i]);
+                var e = extrapolateToEnd(numArr);
+                sum += (numArr[numArr.length - 1] + e[e.length - 1]);
+            }
+
+            return sum;
+        }
+
+        function solve2(arr) {
+            var sum = 0;
+
+            for (var i = 0; i < arr.length; i++) {
+                var numArr = stringToNumbers(arr[i]);
+                var e = extrapolateToBeginning(numArr);
+                sum += (numArr[0] - e[0]);
+            }
+
+            return sum;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+
+
+    </script>
+</html>
