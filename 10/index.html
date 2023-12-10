@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        class Node {
+            c = "";
+            x = -1;
+            y = -1;
+            isStart = false;
+            isVisited = false;
+
+            constructor(x, y, c) {
+                this.isVisited = false;
+                this.isStart = (c == 'S');
+                this.x = x;
+                this.y = y;
+                this.c = c;
+            }
+
+            openUp = function() { return this.c == 'J' || this.c == '|' || this.c == 'L'; }
+            openDown = function() { return this.c == 'F' || this.c == '|' || this.c == '7'; }
+            openLeft = function() { return this.c == 'J' || this.c == '-' || this.c == '7'; }
+            openRight = function() { return this.c == 'F' || this.c == '-' || this.c == 'L'; }
+
+            findRealCharacter = function(map) {
+                try {
+
+                if (map[this.y][this.x + 1].openLeft() && map[this.y + 1][this.x].openUp()) {
+                    this.c = 'F';
+                    return;
+                }
+
+                if (map[this.y][this.x - 1].openRight && map[this.y + 1][this.x].openUp()) {
+                    this.c = '7';
+                    return;
+                }
+
+                if (map[this.y + 1][this.x].openUp() && this.y > 0 && map[this.y - 1][this.x].openDown()) {
+                    this.c = '|';
+                    return;
+                }
+
+                if (map[this.y][this.x + 1].openLeft() && this.x > 0 && map[this.y][this.x - 1].openRight()) {
+                    this.c = '-';
+                    return;
+                }
+
+                if (map[this.y][this.x + 1].openLeft() && map[this.y + 1][this.x].openUp()) {
+                    this.c = 'F';
+                    return;
+                }
+
+            }   catch (e) {
+                debugger;
+            }
+
+                this.c = '?????????';
+            }
+
+            findNextNode = function(map) {
+                if (this.openUp() && !map[this.y - 1][this.x].isVisited) { return map[this.y - 1][this.x]; }
+                if (this.openDown() && !map[this.y + 1][this.x].isVisited) { return map[this.y + 1][this.x]; }
+                if (this.openLeft() && !map[this.y][this.x - 1].isVisited) { return map[this.y][this.x - 1]; }
+                if (this.openRight() && !map[this.y][this.x + 1].isVisited) { return map[this.y][this.x + 1]; }
+            }
+        }
+
+        function printMap(map) {
+            for (var i = 0; i < map.length; i++) {
+                var s = "";
+                for (var j = 0; j < map[i].length; j++) {
+                    s += map[i][j].c;
+                }
+
+                console.log(s);
+            }
+        }
+
+        function mapToBitmap(map) {
+            var bitmap = [];
+            for (var i = 0; i < map.length; i++) {
+                var line = [];
+                for (var j = 0; j < map[i].length; j++) {
+                    var v = map[i][j].c == '.' ? 0 : 1;
+                    line.push(v);
+                }
+
+                bitmap.push(line);
+            }
+
+            return bitmap;
+        }
+
+        function solve(arr) {
+            var map = [];
+
+            var startNode;
+
+            for (var i = 0; i < arr.length; i++) {
+                var larr = arr[i].split('');
+                var mapline = [];
+
+                for (var j = 0; j < larr.length; j++) {
+                    var node = new Node(j, i, larr[j]);
+                    mapline.push(node);
+                    if (node.isStart) {
+                        startNode = node;
+                    }
+                }
+
+                map.push(mapline);
+            }
+
+            startNode.findRealCharacter(map);
+            var nextNode = startNode;
+            var count = 0;
+            do {
+                nextNode.isVisited = true;
+                nextNode = nextNode.findNextNode(map);
+                count++;
+            } while (nextNode);
+
+            return count / 2;
+        }
+
+        function solve2(arr) {
+            var map = [];
+
+            var startNode;
+
+            for (var i = 0; i < arr.length; i++) {
+                var larr = arr[i].split('');
+                var mapline = [];
+
+                for (var j = 0; j < larr.length; j++) {
+                    var node = new Node(j, i, larr[j]);
+                    mapline.push(node);
+                    if (node.isStart) {
+                        startNode = node;
+                    }
+                }
+
+                map.push(mapline);
+            }
+
+            startNode.findRealCharacter(map);
+            var nextNode = startNode;
+
+            do {
+                nextNode.isVisited = true;
+                nextNode = nextNode.findNextNode(map);
+            } while (nextNode);
+
+            for (var i = 0; i < map.length; i++) {
+                for (var j = 0; j < map[i].length; j++) {
+                    if (!map[i][j].isVisited) {
+                        map[i][j].c = '.';
+                    }
+                }
+            }
+
+            printMap(map);
+            var foo = mapToBitmap(map);
+            console.log(foo);
+
+            debugger;
+
+            return 123123123;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+
+
+    </script>
+</html>
