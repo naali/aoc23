@@ -10,7 +10,9 @@
             var splitted = str.split("\n");
 
             for (var i = 0; i < splitted.length; i++) {
-                arr.push(splitted[i]);
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
             }
 
             return arr;
@@ -45,7 +47,5 @@
               
             fr.readAsText(this.files[0]);
         })
-
-
     </script>
 </html>
