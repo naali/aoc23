@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function createRegex(nums) {
+            var s = "^(\\.*)"
+
+            for (var i = 0; i < nums.length; i++) {
+                s += "([#]{" + nums[i] + "})";
+
+                if (i < nums.length - 1) {
+                    s += "(\\.+)";
+                }
+            }
+
+            s += '(\\.*)$';
+//            console.log(s);
+            return RegExp(s);
+        }
+
+        function stringToNumArr(s) {
+            var arr = [];
+
+            var splitted = s.split(',');
+
+            for (var i = 0; i < splitted.length; i++) {
+                arr.push(parseInt(splitted[i]));
+            }
+
+            return arr;
+        }
+
+        function createBinaryString (nMask) {
+            // nMask must be between -2147483648 and 2147483647
+            for (var nFlag = 0, nShifted = nMask, sMask = ""; nFlag < 32; nFlag++, sMask += String(nShifted >>> 31), nShifted <<= 1);
+            return sMask;
+        }
+
+        function createReplacementArray(s) {
+            var arr = [];
+
+            var cc = charCount(s, '?');
+            var count = Math.pow(2, cc);
+
+            for (var i = 0; i < count; i++) {
+                var bs = createBinaryString(i);
+                var cut = bs.substring(bs.length - cc).replaceAll('0', '.').replaceAll('1', '#');
+
+                var p = 0;
+                var str = "";
+                for (var j = 0; j < s.length; j++) {
+                    if (s.charAt(j) == '?') {
+                        str += cut.charAt(p++);
+                    } else {
+                        str += s.charAt(j);
+                    }
+                }
+
+                arr.push(str);
+            }
+
+            return arr;
+        }
+
+        function charCount(s, c) {
+            var count = 0;
+            for (var i = 0; i < s.length; i++) {
+                count += (s.charAt(i) == c ? 1 : 0);
+            }
+
+            return count;
+        }
+
+        function solve(arr) {
+            var count = 0;
+
+            for (var i = 0; i < arr.length; i++) {
+                var splitted = arr[i].split(' ');
+                var nums = stringToNumArr(splitted[1]);
+                var re = createRegex(nums);
+                var repl = createReplacementArray(splitted[0]);
+
+                var innerCount = 0;
+
+                for (var j = 0; j < repl.length; j++) {
+                    if (repl[j].match(re)) {
+                        innerCount++;
+                    }
+                }
+
+                console.log(splitted[0] + ", matches " + innerCount + " " + re);
+                count += innerCount;
+            }
+
+            return count;
+        }
+
+        function copyStringNumTimes(s, times, separator) {
+            var outstr = "";
+            for (var i = 0; i < times; i++) {
+                for (var j = 0; j < s.length; j++) {
+                    outstr += s.charAt(j);
+                }
+
+                if (i < times - 1) {
+                    outstr += separator;
+                }
+            }
+
+            return outstr;
+        }
+
+        function solve2(arr) {
+            var count = 0;
+
+            for (var i = 0; i < arr.length; i++) {
+                var splitted = arr[i].split(' ');
+                var nums = stringToNumArr(copyStringNumTimes(splitted[1], 5, ','));
+                var re = createRegex(nums);
+                var s = copyStringNumTimes(splitted[0], 5, '?');
+
+                var cc = charCount(s, '?');
+                var count = Math.pow(2, cc);
+
+                var innerCount = 0;
+
+                for (var j = 0; j < count; j++) {
+                    var bs = createBinaryString(j);
+                    var cut = bs.substring(bs.length - cc).replaceAll('0', '.').replaceAll('1', '#');
+
+                    var p = 0;
+                    var str = "";
+                    for (var k = 0; k < s.length; k++) {
+                        if (s.charAt(k) == '?') {
+                            str += cut.charAt(p++);
+                        } else {
+                            str += s.charAt(k);
+                        }
+                    }
+
+                    if (str.match(re)) {
+                        innerCount++;
+                    }
+                }
+
+                console.log(splitted[0] + ", matches " + innerCount + " " + re);
+                count += innerCount;
+            }
+
+            return count;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
