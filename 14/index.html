@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function replaceChar(s, index, char) {
+            return s.substring(0, index) + char + s.substring(index + 1);
+        }
+
+        function print(arr) {
+            var s = "";
+            for (var i = 0; i < arr.length; i++) {
+                s += arr[i] + "\n";
+            }
+            console.log(s);
+        }
+
+        function moveNorth(arr) {
+            var changed = false;
+
+            for (var i = 1; i < arr.length; i++) {
+                for (var j = 0; j < arr[i].length; j++) {
+                    if (arr[i].charAt(j) == 'O' && arr[i - 1].charAt(j) == '.') {
+                        arr[i] = replaceChar(arr[i], j, '.');
+                        arr[i - 1] = replaceChar(arr[i - 1], j, 'O');
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                arr = moveNorth(arr);
+            }
+
+            return arr;
+        }
+
+        function moveSouth(arr) {
+            var changed = false;
+
+            for (var i = 0; i < arr.length - 1; i++) {
+                for (var j = 0; j < arr[i].length; j++) {
+                    if (arr[i].charAt(j) == 'O' && arr[i + 1].charAt(j) == '.') {
+                        arr[i] = replaceChar(arr[i], j, '.');
+                        arr[i + 1] = replaceChar(arr[i + 1], j, 'O');
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                arr = moveSouth(arr);
+            }
+
+            return arr;
+        }
+
+        function moveWest(arr) {
+            var changed = false;
+
+            for (var i = 0; i < arr.length; i++) {
+                for (var j = 1; j < arr[i].length; j++) {
+                    if (arr[i].charAt(j) == 'O' && arr[i].charAt(j - 1) == '.') {
+                        arr[i] = replaceChar(arr[i], j, '.');
+                        arr[i] = replaceChar(arr[i], j - 1, 'O');
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                arr = moveWest(arr);
+            }
+
+            return arr;
+        }
+
+        function moveEast(arr) {
+            var changed = false;
+
+            for (var i = 0; i < arr.length; i++) {
+                for (var j = 0; j < arr[i].length - 1; j++) {
+                    if (arr[i].charAt(j) == 'O' && arr[i].charAt(j + 1) == '.') {
+                        arr[i] = replaceChar(arr[i], j, '.');
+                        arr[i] = replaceChar(arr[i], j + 1, 'O');
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                arr = moveEast(arr);
+            }
+
+            return arr;
+        }
+
+        function countChars(s, char) {
+            var count = 0; 
+
+            for (var i = 0; i < s.length; i++) {
+                count += s.charAt(i) == char ? 1 : 0;
+            }
+
+            return count;
+        }
+
+        function calculateWeight(arr) {
+            var w = 0;
+
+            for (var i = 0; i < arr.length; i++) {
+                w += countChars(arr[i], 'O') * (arr.length - i);
+            }
+
+            return w;
+        }
+
+        function solve(arr) {
+            var moved = moveNorth(arr);
+            var weight = calculateWeight(moved);
+            return weight;
+        }
+
+        function solve2(arr) {
+            var maps = {};
+
+            for (var i = 0; i < 1000000; i++) {
+                arr = moveNorth(arr);
+                arr = moveWest(arr);
+                arr = moveSouth(arr);
+                arr = moveEast(arr);
+
+                if (!maps[arr]) {
+                    maps[arr] = {weight: calculateWeight(arr), index: i, count: 1};
+                } else {
+                    var m = maps[arr];
+                    if (m.count == 5) {
+                        break;
+                        debugger;
+                    }
+
+                    m.count = m.count + 1;
+                    maps[arr] = m;
+                }
+            }
+
+            var keys = Object.keys(maps);
+            var offset = 0;
+            var loopLength = 0;
+
+            for (var i = 0; i < keys.length; i++) {
+                if (maps[keys[i]].count == 1) {
+                    offset++;
+                } if (maps[keys[i]].count == 5) {
+                    loopLength++;
+                }
+            }
+
+            debugger;
+
+            var keyIndex = (1000000000 - offset) % loopLength;
+
+            return maps[keys[keyIndex + 1]].weight;
+
+            return maps[Object.keys(maps)[(1000000000 + 4) % Object.keys(maps).length]]
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>

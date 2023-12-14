@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                var lines = splitted[i].split("\n");
+
+                var innerArr = [];
+
+                for (var j = 0; j < lines.length; j++) {
+                    if (lines[j].length > 0) {
+                        innerArr.push(lines[j]);
+                    }
+                }
+
+                arr.push(innerArr);
+            }
+
+            return arr;
+        }
+
+        function isRowMirror(a, startRU, startRD) {
+            var isMirror = true;
+            for (var i = startRU, j = startRD; i >= 0 && j < a.length; i--, j++) {
+                isMirror &= (a[i] == a[j]);
+            }
+
+            return isMirror;
+        }
+
+        function findMirrorRow(a) {
+            var largest = -1;
+            for (var i = 0; i < a.length - 1; i++) {
+                var isMirror = false;
+                isMirror = isRowMirror(a, i, i + 1);
+
+                if (isMirror) {
+                    if (largest < i) {
+                        largest = i;
+                    }
+                }
+            }
+
+            for (var i = 1; i < a.length - 1; i++) {
+                var isMirror = false;
+
+                isMirror = isRowMirror(a, i, i);
+                if (isMirror) {
+                    if (largest < i) {
+                        largest = i;
+                    }
+                }
+            }
+
+            if (largest < -1) { return 0; }
+
+            return largest + 1;
+        }
+
+        function rotate90(a) {
+            var out = [];
+
+            for (var j = a[0].length - 1; j >= 0; j--) {                
+                var line = "";
+
+                for (var i = 0; i < a.length; i++) {
+                    line += a[i].charAt(j);
+                }
+
+                out.push(line);
+            }
+
+            return out;
+        }
+
+        function findMirrorColumn(a) {
+            var rotA = rotate90(a);
+//            console.log("ROTATED");
+//            print(rotA);
+//            console.log(rotA);
+            var col = findMirrorRow(rotA);
+            return rotA.length - col - 1;
+        }
+
+        function print(a) {
+            var s = "";
+
+            for (var i = 0; i < a.length; i++) {
+                s += a[i] + "\n";
+            }
+            
+            console.log(s);
+        }
+
+        function solve(arr) {
+            var count = 0;
+/*
+            var asd = [];
+            asd.push('#ABCD');
+            asd.push('E....');
+            asd.push('F....');
+
+            console.log(asd);
+            var rot = rotate90(asd);
+            console.log(rot);
+
+            debugger;
+*/
+            for (var i = 0; i < arr.length; i++) {
+                var mirrorRow = findMirrorRow(arr[i]);
+                if (mirrorRow) {
+                    console.log("ROW: " + mirrorRow);
+                    print(arr[i]);
+                }
+
+                var mirrorColumn = findMirrorColumn(arr[i]);
+                if (mirrorColumn) {
+                    console.log("COL: " + mirrorColumn);
+                    print(rotate90(arr[i]));
+                }
+
+                if (mirrorRow > mirrorColumn) {
+                    count += mirrorRow * 100;
+                } else {
+                    count += mirrorColumn;
+                }
+            }
+
+            return count;
+        }
+
+        function solve2(arr) {
+            return 2;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
