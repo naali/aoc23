@@ -137,47 +137,26 @@
         }
 
         function solve2(arr) {
-            var maps = {};
+            var maps = [];
+            var start = -1;
 
-            for (var i = 0; i < 1000000; i++) {
+            for (var i = 0; i < 1000000 && start < 0; i++) {
                 arr = moveNorth(arr);
                 arr = moveWest(arr);
                 arr = moveSouth(arr);
                 arr = moveEast(arr);
 
-                if (!maps[arr]) {
-                    maps[arr] = {weight: calculateWeight(arr), index: i, count: 1};
+                if (maps.includes(arr.join(":"))) {
+                    start = maps.indexOf(arr.join(":"));
+                    break;
                 } else {
-                    var m = maps[arr];
-                    if (m.count == 5) {
-                        break;
-                        debugger;
-                    }
-
-                    m.count = m.count + 1;
-                    maps[arr] = m;
+                    maps.push(arr.join(":"));
                 }
             }
 
-            var keys = Object.keys(maps);
-            var offset = 0;
-            var loopLength = 0;
-
-            for (var i = 0; i < keys.length; i++) {
-                if (maps[keys[i]].count == 1) {
-                    offset++;
-                } if (maps[keys[i]].count == 5) {
-                    loopLength++;
-                }
-            }
-
-            debugger;
-
-            var keyIndex = (1000000000 - offset) % loopLength;
-
-            return maps[keys[keyIndex + 1]].weight;
-
-            return maps[Object.keys(maps)[(1000000000 + 4) % Object.keys(maps).length]]
+            var map = maps.slice(start)[(1000000000 - start - 1) % (maps.length - start)].split(":");
+            var weight = calculateWeight(map);
+            return weight;
         }
 
         var result1 = document.getElementById('result1');
