@@ -28,7 +28,7 @@
 
         function isRowMirror(a, startRU, startRD) {
             var isMirror = true;
-            for (var i = startRU, j = startRD; i >= 0 && j < a.length; i--, j++) {
+            for (var i = startRU, j = startRD; i >= 0 && j < a.length && isMirror; i--, j++) {
                 isMirror &= (a[i] == a[j]);
             }
 
@@ -48,20 +48,7 @@
                 }
             }
 
-            for (var i = 1; i < a.length - 1; i++) {
-                var isMirror = false;
-
-                isMirror = isRowMirror(a, i, i);
-                if (isMirror) {
-                    if (largest < i) {
-                        largest = i;
-                    }
-                }
-            }
-
-            if (largest < -1) { return 0; }
-
-            return largest + 1;
+            return largest;
         }
 
         function rotate90(a) {
@@ -82,18 +69,46 @@
 
         function findMirrorColumn(a) {
             var rotA = rotate90(a);
-//            console.log("ROTATED");
-//            print(rotA);
-//            console.log(rotA);
             var col = findMirrorRow(rotA);
             return rotA.length - col - 1;
         }
 
-        function print(a) {
+        function print(a, row, col) {
             var s = "";
 
+            if (col > 0) {
+                s += " ";
+                for (var i = 0; i < col - 1; i++) {
+                    s += " ";
+                }
+                s += '\\/';
+            }
+
+            s += '\n';
+
             for (var i = 0; i < a.length; i++) {
-                s += a[i] + "\n";
+                var ptrStart = ' ';
+                var ptrEnd = ' ';
+
+                if (row > 0) {
+                    if (i == row - 1) { 
+                        ptrStart = '\\';
+                        ptrEnd = '/';
+                    } else if (i == row) {
+                        ptrStart = '/';
+                        ptrEnd = '\\';
+                    }
+                }
+
+                s += ptrStart + a[i] + ptrEnd + "\n";
+            }
+
+            if (col > 0) {
+                s += " ";
+                for (var i = 0; i < col - 1; i++) {
+                    s += " ";
+                }
+                s += '/\\';
             }
             
             console.log(s);
@@ -101,35 +116,24 @@
 
         function solve(arr) {
             var count = 0;
-/*
-            var asd = [];
-            asd.push('#ABCD');
-            asd.push('E....');
-            asd.push('F....');
-
-            console.log(asd);
-            var rot = rotate90(asd);
-            console.log(rot);
-
-            debugger;
-*/
+            
             for (var i = 0; i < arr.length; i++) {
                 var mirrorRow = findMirrorRow(arr[i]);
-                if (mirrorRow) {
-                    console.log("ROW: " + mirrorRow);
-                    print(arr[i]);
+                if (mirrorRow >= 0) {
+                    console.log("ROW: " + (mirrorRow + 1));
+                    print(arr[i], (mirrorRow + 1));
+                    count += (mirrorRow + 1) * 100;
+                    continue;
                 }
 
                 var mirrorColumn = findMirrorColumn(arr[i]);
-                if (mirrorColumn) {
+                if (mirrorColumn >= 0) {
                     console.log("COL: " + mirrorColumn);
-                    print(rotate90(arr[i]));
-                }
-
-                if (mirrorRow > mirrorColumn) {
-                    count += mirrorRow * 100;
-                } else {
+                    print(arr[i], 0, mirrorColumn);
                     count += mirrorColumn;
+                    continue;
+                } else {
+                    debugger;
                 }
             }
 
