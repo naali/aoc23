@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function parseLine(s) {
+            var l = s.split(' ');
+            var dir = l[0];
+            var count = parseInt(l[1]);
+            var color = l[2];
+            return {dir: dir, count: count, color: color};
+        }
+
+        function parseTrench(a) {
+            var arr = [];
+            var cx = 0; 
+            var cy = 0;
+            var d2d = {
+                'U': {dx: 0, dy: -1},
+                'D': {dx: 0, dy: +1},
+                'R': {dx: +1, dy: 0},
+                'L': {dx: -1, dy: 0}
+            }
+
+            for (var i = 0; i < a.length; i++) {
+                var l = parseLine(a[i]);
+
+                var deltas = d2d[l.dir];
+
+                for (var c = 0; c < l.count; c++) {
+                    var o = {x: cx, y: cy, color: l.color};
+                    arr.push(o);
+                    cx += deltas.dx;
+                    cy += deltas.dy;
+                }
+            }
+
+            return arr;
+        }
+
+        function maxY(t) {
+            var max = -1;
+            for (var i = 0; i < t.length; i++) {
+                max = max < t[i].y ? t[i].y : max;
+            }
+
+            return max + 1;
+        }
+
+        function maxX(t) {
+            var max = -1;
+            for (var i = 0; i < t.length; i++) {
+                max = max < t[i].x ? t[i].x : max;
+            }
+
+            return max + 1;
+        }
+
+        function minY(t) {
+            var min = 123123123123;
+
+            for (var i = 0; i < t.length; i++) {
+                min = min > t[i].y ? t[i].y : min;
+            }
+
+            return min;
+        }
+
+        function minX(t) {
+            var min = 123123123123;
+            for (var i = 0; i < t.length; i++) {
+                min = min > t[i].x ? t[i].x : min;
+            }
+
+            return min;
+        }
+
+        function transpose(t, x, y) {
+            for (var i = 0; i < t.length; i++) {
+                t[i].x = t[i].x + x;
+                t[i].y = t[i].y + y;
+            }
+        }
+
+        function print(trench, fill) {
+            var mx = maxX(trench);
+            var my = maxY(trench);
+
+            var arr = [];
+            for (var i = 0; i < my; i++) {
+                var arrLine = [];
+                for (var j = 0; j < mx; j++) {
+                    arrLine.push(' ');
+                }
+                arr.push(arrLine);
+            }
+
+            for (var i = 0; i < trench.length; i++) {
+                var s = trench[i];
+                arr[s.y][s.x] = "#";
+            }
+
+            if (fill) {
+                for (var i = 0; i < fill.length; i++) {
+                    var s = fill[i];
+                    arr[s.y][s.x] = 'F';
+                }
+            }
+
+            var s = "";
+
+            for (var i = 0; i < arr.length; i++) {
+                s += arr[i].join('') + "\n";
+            }
+
+            console.log(s);
+            return arr;
+        }
+
+        function flood(arr, sx, sy) {
+            var q = [{x:sx, y:sy}];
+
+            do {
+                var n = q.shift();
+                if (n.x >= 0 && n.x < arr[0].length && n.y >=0 && n.y < arr.length && arr[n.y][n.x] == ' ') {
+                    q.push({x: n.x + 1, y: n.y});
+                    q.push({x: n.x - 1, y: n.y});
+                    q.push({x: n.x, y: n.y + 1});
+                    q.push({x: n.x, y: n.y - 1});
+                    arr[n.y][n.x] = 'F';
+                }
+            } while (q.length > 0)
+
+            return arr;
+        }
+
+        function fill(trench) {
+            var lines = [];
+
+            var mx = minX(trench);
+            var my = minY(trench);
+
+            transpose(trench, Math.abs(mx), Math.abs(my));
+
+            for (var i = 0; i < maxY(trench); i++) {
+                lines.push([]);
+            }
+            
+            for (var i = 0; i < trench.length; i++) {
+                lines[trench[i].y].push(trench[i]);
+            }
+
+            for (var i = 0; i < lines.length; i++) {
+                lines[i] = lines[i].sort(function(a, b) {
+                    return a.x - b.x;
+                });
+            }
+
+            var flooded = flood(print(trench), 150, 150);
+
+            var filled = 0;
+
+            for (var i = 0; i < flooded.length; i++) {
+                for (var j = 0; j < flooded[i].length; j++) {
+                    filled += flooded[i][j] == 'F' ? 1 : 0;
+                }
+            }
+        
+
+            return trench.length + filled;
+        }
+
+        function solve(arr) {
+            var trench = parseTrench(arr);
+            fill(trench);
+            return fill(trench);
+        }
+
+        function solve2(arr) {
+            return 2;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
