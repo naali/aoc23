@@ -186,13 +186,81 @@
         }
 
         function solve(arr) {
-            var trench = parseTrench(arr);
-            fill(trench);
-            return fill(trench);
+//            return fill(parseTrench(arr));
+        }
+
+        function parseLine2(l) {
+            var s = l.split("#");
+            var arr = s[1].split('');
+            arr.pop(); // drop )
+
+            dirs = {
+                0: 'R',
+                1: 'D',
+                2: 'L',
+                3: 'U'
+            }
+
+            var dir = dirs[parseInt(arr.pop())];
+            var len = parseInt(arr.join(''), 16);
+
+            return {dir: dir, len: len};
+        }
+
+        function parseTrench2(a) {
+            var arr = [];
+            var cx = 0; 
+            var cy = 0;
+            var d2d = {
+                'U': {dx: 0, dy: -1},
+                'D': {dx: 0, dy: +1},
+                'R': {dx: +1, dy: 0},
+                'L': {dx: -1, dy: 0}
+            }
+
+//            arr.push({x: cx, y: cy});
+
+            for (var i = 0; i < a.length; i++) {
+                var l = parseLine2(a[i]);
+                var deltas = d2d[l.dir];
+
+                cx = cx + deltas.dx * l.len;
+                cy = cy + deltas.dy * l.len;
+
+                arr.push({x: cx, y: cy});
+            }
+
+            return arr;
+        }
+
+        function lineLen(a, b) {
+            return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
         }
 
         function solve2(arr) {
-            return 2;
+            var foo = parseTrench2(arr);
+
+            var area = 0;
+            debugger;
+
+            
+            do {
+                var a = foo.shift();
+                var b = foo[0];
+                var c = foo[1];
+
+                var aLen = lineLen(a, b);
+                var bLen = lineLen(b, c);
+                var cLen = lineLen(c, a);
+
+                var s = (aLen + bLen + cLen) / 2;
+
+                var ar = Math.sqrt(s * (s - aLen) * (s - bLen) * (s - cLen));
+                area += ar;
+
+            } while (foo.length > 2);
+
+            return area;
         }
 
         var result1 = document.getElementById('result1');
