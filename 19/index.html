@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                arr.push(splitted[i]);
+            }
+
+            return arr;
+        }
+
+        function parseWorkflows(a) {
+            var out = {};
+            var re = /^(\w+){(.*)}$/;
+
+            var splitted = a.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length == 0) { continue; }
+                var m = splitted[i].match(re);
+                var o = { 'name': m[1], wfs: [] };
+                
+                var wfSplit = m[2].split(',');
+
+                for (var j = 0; j < wfSplit.length; j++) {
+                    var wfInner = wfSplit[j].split(':');
+                    var action = { };
+
+                    if (wfInner.length == 1) {
+                        action["target"] = wfInner[0];
+                    } else if (wfInner.length == 2) {
+                        action["target"] = wfInner[1];
+                        var compRe = /^(\w+)([<>=]+)(\d+)$/;
+                        var comp = wfInner[0].match(compRe);
+                        action["compTarget"] = comp[1];
+                        action["comparison"] = comp[2];
+                        action["compValue"] = parseInt(comp[3]);
+                    } else {
+                        debugger;
+                    }
+
+                    o.wfs.push(action);
+                }
+
+                out[m[1]] = o;
+            }
+
+            return out;
+        }
+
+        function calculateRatings(a) {
+            var c = 0;
+
+            for (var i = 0; i < a.length; i++) {
+                if (a[i].currentWorkflow != 'A') { continue; }
+
+                c += a[i].x;
+                c += a[i].m;
+                c += a[i].a;
+                c += a[i].s;
+            }
+
+            return c;
+        }
+
+        function parseParts(a) {
+            var out = [];
+
+            var re = /{(.*)}/;
+            var splitted = a.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length == 0) { continue; }
+
+                var m = splitted[i].match(re);
+                var variables = m[1].split(',');
+
+                var inner = {
+                    currentWorkflow: 'in'
+                };
+
+                for (var j = 0; j < variables.length; j++) {
+                    var name = variables[j].split('=')[0];
+                    var value = parseInt(variables[j].split('=')[1]);
+                    var o = {name: name, value: value};
+                    inner[name] = value
+                }
+
+                out.push(inner);
+            }
+
+            return out;
+        }
+
+        function solve(arr) {
+            var workFlows = parseWorkflows(arr[0]);
+            var parts = parseParts(arr[1]);
+
+
+            do {
+                var solved = true;
+
+                for (var i = 0; i < parts.length; i++) {
+                    var p = parts[i];
+                    var alreadySolved = (p.currentWorkflow == 'R' || p.currentWorkflow == 'A');
+                    solved &= alreadySolved;
+                    if (alreadySolved) { continue; }
+
+                    var wf = workFlows[p.currentWorkflow];
+
+                    for (var j = 0; j < wf.wfs.length ; j++) {
+                        var w = wf.wfs[j];
+                        var comparisonValue = w.compValue;
+                        var comparisonOperation = w.comparison;
+                        var targetValue = p[w.compTarget];
+
+                        if (comparisonOperation == '<') {
+                            if (targetValue < comparisonValue) {
+                                p.currentWorkflow = w.target;
+                                break;
+                            }
+                        } else if (comparisonOperation == '>') {
+                            if (targetValue > comparisonValue) {
+                                p.currentWorkflow = w.target;
+                                break;
+                            }
+                        } else {
+                            p.currentWorkflow = w.target;
+                            break;
+                        }
+
+                        console.log(p.currentWorkflow);
+                    }
+                }
+
+            } while (!solved);
+
+            var result = calculateRatings(parts);
+            
+            debugger;
+            return result;
+        }
+
+        function solve2(arr) {
+            return 2;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
