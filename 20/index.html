@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        class Signal {
+            sender = null;
+            receiver = null;
+            signal = -1;
+
+            constructor(s, r, signal) {
+                this.sender = s;
+                this.receiver = r;
+                this.signal = signal;
+            }
+        }
+
+        class Module {
+            name = '';
+            type = '';
+            outputs = [];
+            inputs = [];
+            inputModules = [];
+            
+            flipflop = 0;
+            conjunction = 0;
+
+            lowSignals = 0;
+            highSignals = 0;
+
+            constructor(name, type) {
+                this.name = name;
+                this.type = type;
+
+                this.flipflop = 0;
+                this.conjunction = 0;
+            }
+
+            addOutput = function(mod) {
+                this.outputs.push(mod);
+            }
+
+            addInputModule = function(mod) {
+                this.inputModules.push({module: mod, lastInput: 0});
+            }
+
+            signal = function(module, lohi) {
+//                console.log(module.name + " " + (lohi == 0 ? '-low-' : '-high-') + " -> " + this.name);
+
+                if (module.name != 'button') {
+                    this.lowSignals += (lohi == 0 ? 1 : 0);
+                    this.highSignals += (lohi == 1 ? 1 : 0);
+                }
+
+                if (this.type == '&') {
+                    this.inputs.push({sender: module, input: lohi});
+                    return;
+                }
+
+                this.inputs.push(lohi);
+            }
+
+            process = function() {
+                var nextSignals = [];
+
+                if (this.type == 'broadcaster') {
+                    if (this.inputs.length == 0) { return []; }
+
+                    var s = this.inputs.shift();
+                    for (var i = 0; i < this.outputs.length; i++) {
+                        nextSignals.push(new Signal(this, this.outputs[i], s));
+                    }
+
+                    return nextSignals;
+                }
+
+                if (this.type == '%') {
+                    if (this.inputs.length == 0) { return []; }
+
+                    var s = this.inputs.shift();
+                    if (s == 1) { return []; }
+
+                    this.flipflop = this.flipflop == 0 ? 1 : 0;
+
+                    for (var i = 0; i < this.outputs.length; i++) {
+                        nextSignals.push(new Signal(this, this.outputs[i], this.flipflop));
+                    }
+
+                    return nextSignals;
+                }
+
+                if (this.type == '&') {
+                    if (this.inputs.length == 0) { return []; }
+
+                    var input = this.inputs.shift();
+                    for (var i = 0; i < this.inputModules.length; i++) {
+                        if (this.inputModules[i].module == input.sender) {
+                            this.inputModules[i].lastInput = input.input;
+                            break;
+                        }
+                    }
+                    
+                    var s = 1;
+                    for (var i = 0; i < this.inputModules.length; i++) {
+                        s *= this.inputModules[i].lastInput;
+                    }
+
+                    this.conjunction = (s == 1 ? 0 : 1);
+                    for (var i = 0; i < this.outputs.length; i++) {
+                        nextSignals.push(new Signal(this, this.outputs[i], this.conjunction));
+                    }
+
+                    return nextSignals;
+                }
+
+                if (this.type == '#') {
+                    if (this.inputs.length == 0) { return 0; }
+
+                    var s = this.inputs.shift();
+                    this.lowSignals += (s == 0 ? 1 : 0);
+                    this.highSignals += (s == 1 ? 1 : 0);
+
+                    if (this.lowSignals > 0) {
+                        debugger;
+                    }
+
+                    return [];
+                }
+                
+                if (this.type == '*') {
+                    if (this.inputs.length == 0) { return 0; }
+
+                    var s = this.inputs.shift();
+                    for (var i = 0; i < this.outputs.length; i++) {
+                        nextSignals.push(new Signal(this, this.outputs[i], s));
+                    }
+
+                    return nextSignals;   
+                }
+            }
+
+        }
+
+        function parseModules(arr) {
+            arr.push('#output -> output');
+            var modules = {};
+            for (var i = 0; i < arr.length; i++) {
+                var [name, _] = arr[i].split(' -> ');
+                var type = name == 'broadcaster' ? 'broadcaster' : name[0];
+                var name = name == 'broadcaster' ? 'broadcaster' : name.substring(1);
+
+                var mod = new Module(name, type);
+                modules[name] = mod;
+            }
+
+            for (var i = 0; i < arr.length; i++) {
+                var [name, outputs] = arr[i].split(' -> ');
+                var name = name == 'broadcaster' ? 'broadcaster' : name.substring(1);
+                var outs = outputs.split(', ');
+
+                for (var j = 0; j < outs.length; j++) {
+                    if (modules[outs[j]]) {
+                        modules[outs[j]].addInputModule(modules[name]);
+                    } else {
+                        modules[outs[j]] = new Module(outs[j], "#");
+                    }
+
+                    modules[name].addOutput(modules[outs[j]]);
+                }
+            }
+
+            return modules;
+        }
+
+        function parseModuleNames(arr) {
+            var names = [];
+
+            for (var i = 0; i < arr.length; i++) {
+                var [name, _] = arr[i].split(' -> ');
+                var name = name == 'broadcaster' ? 'broadcaster' : name.substring(1);
+                names.push(name);
+            }
+
+            return names;
+        }
+
+        function getStates(mods) {
+            var states = {};
+
+            var keys = Object.keys(mods);
+
+            for (var i = 0; i < keys.length; i++) {
+                var state = { flipflop: mods[keys[i]].flipflop, lowSignals: mods[keys[i]].lowSignals, lastInputs: [] }
+
+                for (var j = 0; j < mods[keys[i]].inputModules.length; j++) {
+                    state.lastInputs.push(mods[keys[i]].inputModules[j].lastInput);
+                }
+
+                states[keys[i]] = state;
+            }
+
+            return states;
+        }
+
+        function compareStates(m1, m2) {
+            var same = true;
+
+            var keys = Object.keys(m1);
+            for (var i = 0; i < keys.length && same; i++) {
+                same &= (m1[keys[i]].flipflop == m2[keys[i]].flipflop);
+
+                for (var j = 0; j < m1[keys[i]].lastInputs.length; j++) {
+                    same &= (m1[keys[i]].lastInputs[j] == m2[keys[i]].lastInputs[j]);
+                }
+            }
+
+            return same;
+        }
+
+        function calculateResult(mods) {
+            var lows = 0;
+            var highs = 0;
+
+            var keys = Object.keys(mods);
+            for (var i = 0; i < keys.length; i++) {
+                lows += mods[keys[i]].lowSignals;
+                highs += mods[keys[i]].highSignals;
+            }
+
+            return lows * highs;
+        }
+
+        function solve(arr) {
+            arr.push("*button -> broadcaster");
+            arr.push("#output -> output");
+
+            var modules = parseModules(arr);
+            var modnames = parseModuleNames(arr);
+
+            var count = 0;
+            do {
+                modules['button'].signal({name: "ELF"}, 0);
+
+                do {
+                    var nextSignals = [];
+
+                    for (var i = 0; i < modnames.length; i++) {
+                        var unsentSignals = modules[modnames[i]].process();
+
+                        for (var j = 0; j < unsentSignals.length; j++) {
+                            nextSignals.push(unsentSignals[j]);
+                        }
+                    }
+
+                    for (var i = 0; i < nextSignals.length; i++) {
+                        var s = nextSignals[i];
+                        s.receiver.signal(s.sender, s.signal);
+                    }
+
+                } while (nextSignals.length > 0);
+
+                count++;
+            } while (count < 1000);
+
+            return calculateResult(modules);
+        }
+
+        function solve2(arr) {
+            return "HNNNNNGH";
+
+            arr.push("*button -> broadcaster");
+            arr.push("#output -> output");
+            arr.push("#rx -> output");
+
+            var modules = parseModules(arr);
+            var modnames = parseModuleNames(arr);
+
+            var original = getStates(modules);
+
+            var count = 0;
+            do {
+                modules['button'].signal({name: "ELF"}, 0);
+
+                do {
+                    var nextSignals = [];
+
+                    for (var i = 0; i < modnames.length; i++) {
+                        var unsentSignals = modules[modnames[i]].process();
+
+                        for (var j = 0; j < unsentSignals.length; j++) {
+                            nextSignals.push(unsentSignals[j]);
+                        }
+                    }
+
+                    for (var i = 0; i < nextSignals.length; i++) {
+                        var s = nextSignals[i];
+                        s.receiver.signal(s.sender, s.signal);
+                    }
+
+                } while (nextSignals.length > 0);
+
+                count++;
+            } while (count < 10000000000);
+
+            return calculateResult(modules);
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
