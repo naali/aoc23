@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+    <input id="inputfile" type="file"><br><br>  
+    <label for="result1">Result 1:</label><div id="result1"></div>
+    <br>
+    <label for="result2">Result 2:</label><div id="result2"></div>
+    <script>
+        function clean(str) {
+            var arr = [];
+            var splitted = str.split("\n");
+
+            for (var i = 0; i < splitted.length; i++) {
+                if (splitted[i].length > 0) {
+                    arr.push(splitted[i]);
+                }
+            }
+
+            return arr;
+        }
+
+        function getMap(arr) {
+            var o = { map: [], elf: {x: 0, y: 0}};
+
+            for (var i = 0; i < arr.length; i++) {
+                o.map.push([]);
+                var line = arr[i].split('');
+                o.map[i] = [];
+                for (var j = 0; j < line.length; j++) {
+                    if (line[j] == 'S') {
+                        o.elf = {x: j, y: i};
+                        o.map[i].push('.');
+                    } else {
+                        o.map[i].push(line[j]);
+                    }
+                }
+            }
+
+            return o;
+        }
+
+        function possibleSteps(map, elf) {
+            var dirs = [
+                {x: 0, y: -1},
+                {x: 0, y: 1},
+                {x: -1, y: 0},
+                {x: 1, y: 0}
+            ];
+
+            var out = [];
+            for (var i = 0; i < dirs.length; i++) {
+                var nx = elf.x + dirs[i].x;
+                var ny = elf.y + dirs[i].y;
+
+                if (nx < 0 || nx >= map[0].length) { continue; }
+                if (ny < 0 || ny >= map.length) { continue; }
+                if (map[ny][nx] != '.') { continue; }
+
+                out.push({ x: nx, y: ny });
+            }
+
+            return out;
+        }
+        
+        function possibleStepsInfiniteMap(map, elf) {
+            var dirs = [
+                {x: 0, y: -1},
+                {x: 0, y: 1},
+                {x: -1, y: 0},
+                {x: 1, y: 0}
+            ];
+
+            var out = [];
+            for (var i = 0; i < dirs.length; i++) {
+
+                var rx = elf.x + dirs[i].x;
+                var ry = elf.y + dirs[i].y;
+
+                var nx = rx % map[0].length;
+                var ny = ry % map.length;
+
+                if (nx < 0) { nx += map[0].length; }
+                if (ny < 0) { ny += map.length; }
+
+                if (map[ny][nx] != '.') { continue; }
+
+                out.push({ x: rx, y: ry });
+            }
+
+            return out;
+        }
+        
+        function removeDuplicates(arr) {
+            var out = {};
+
+            for (var i = 0; i < arr.length; i++) {
+                var v = arr[i];
+                if (!out[v.x + ',' + v.y]) {
+                    out[v.x + ',' + v.y] = arr[i];
+                }
+            }
+
+            return Object.values(out);
+        }
+
+        function solve(arr) {
+            var m = getMap(arr);
+
+            var elf = m.elf;
+            var map = m.map;
+            
+            var stepCount = 1;
+            var possiblePositions = [elf];
+
+            do {
+                var newPositions = [];
+
+                for (var i = 0; i < possiblePositions.length; i++) {
+                    var nextSteps = possibleSteps(map, possiblePositions[i]);
+                    newPositions = newPositions.concat(nextSteps);
+                }
+
+                possiblePositions = removeDuplicates(newPositions);
+            
+            } while (stepCount++ < 64);
+
+            return possiblePositions.length;
+        }
+
+        function solve2(arr) {
+            var m = getMap(arr);
+
+            var elf = m.elf;
+            var map = m.map;
+            
+            var stepCount = 1;
+            var possiblePositions = [elf];
+
+            do {
+                var newPositions = [];
+
+                for (var i = 0; i < possiblePositions.length; i++) {
+                    var nextSteps = possibleStepsInfiniteMap(map, possiblePositions[i]);
+                    newPositions = newPositions.concat(nextSteps);
+                }
+
+                possiblePositions = removeDuplicates(newPositions);
+            
+            } while (stepCount++ < 5000);
+
+            return possiblePositions.length;
+        }
+
+        var result1 = document.getElementById('result1');
+        var result2 = document.getElementById('result2');
+
+        document.getElementById('inputfile').addEventListener('change', function() {
+            var fr = new FileReader();
+
+            fr.onload = function() {
+                var cleaned = clean(fr.result);
+                console.log(cleaned);
+
+                var solved = solve(cleaned);
+                console.log(solved);
+                result1.innerHTML = solved;
+
+                var solved2 = solve2(cleaned);
+                console.log(solved2);
+                result2.innerHTML = solved2;
+            }
+              
+            fr.readAsText(this.files[0]);
+        })
+    </script>
+</html>
